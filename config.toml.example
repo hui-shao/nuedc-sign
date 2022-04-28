@@ -1,0 +1,8 @@
+[common]
+debug = true
+
+[user]
+cookie = ""  # 电子设计竞赛网站的cookie
+
+[push]
+push_token = ""  # 用于 PushPlus 推送的 token, 不需要则留空
