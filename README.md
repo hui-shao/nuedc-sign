@@ -32,7 +32,7 @@
 - Crontab
 
   ```
-  15 9 * * * "python3" "/root/neudc_sign/main.py" >> /root/neudc_sign/log.txt 2>&1
+  15 9 * * * python3 -u "/root/nuedc_sign/main.py" >> /root/nuedc_sign/log.txt 2>&1
   ```
 
 - Github Action
