@@ -37,8 +37,13 @@ class NuedcSign:
             if self.debug:
                 Avalon.debug_info(f"Response: {res_dict}")
             if res_dict["status"] == 0:
-                Avalon.info("签到成功")
-                PushPlus.send(self.push_token, "签到成功-电子设计竞赛网", f"当前已连续签到: {res_dict['data']['sign_count']} 天",
+                Avalon.info("签到成功-今天已经签到过啦")
+                PushPlus.send(self.push_token, "签到成功-电子设计竞赛网", f"已经签到过啦\n\n当前已连续签到: {res_dict['data']['sign_count']} 天",
+                              "markdown")
+                break
+            elif res_dict["status"] == 1:
+                Avalon.info("签到成功-今天首次签到")
+                PushPlus.send(self.push_token, "签到成功-电子设计竞赛网", f"今天签到成功\n\n当前已连续签到: {res_dict['data']['sign_count']} 天",
                               "markdown")
                 break
             elif res_dict["status"] == 2:
@@ -54,6 +59,7 @@ class NuedcSign:
                                   f"返回信息:\n\n code: {res_dict['status']}\n\ninfo: {res_dict['info']}", "markdown")
                     break
                 else:
+                    Avalon.warning("重试中....")
                     retry_n += 1
                     time.sleep(3)
                     continue
