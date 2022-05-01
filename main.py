@@ -26,29 +26,36 @@ class NuedcSign:
         url = "https://www.nuedc-training.com.cn/index/mall/sign"
         retry_n = 0
         while 1:
+            if self.debug:
+                Avalon.debug_info(f"Current Retry N = {retry_n}")
             if retry_n >= 3:
                 Avalon.error("达到最大重试次数, 退出")
                 PushPlus.send(self.push_token, "电子设计竞赛网签到异常", "达到最大重试次数, 退出", "markdown")
                 break
             res = self.r.requests("get", url)
             res_dict = res.json()
+            if self.debug:
+                Avalon.debug_info(f"Response: {res_dict}")
             if res_dict["status"] == 0:
-                PushPlus.send(self.push_token, "签到成功-电子设计竞赛网", f"返回信息:\n\n 连续签到: {res_dict['data']['sign_count']} 天",
+                Avalon.info("签到成功")
+                PushPlus.send(self.push_token, "签到成功-电子设计竞赛网", f"当前已连续签到: {res_dict['data']['sign_count']} 天",
                               "markdown")
                 break
             elif res_dict["status"] == 2:
+                Avalon.warning("签到失败 需要登陆")
                 PushPlus.send(self.push_token, "签到异常-电子设计竞赛网",
                               f"需要登陆\n\n返回信息:\n\n code: {res_dict['status']}", "markdown")
                 break
             else:
-                Avalon.error("未知异常")
-                time.sleep(3)
+                Avalon.warning("签到可能失败 未定义返回码")
+                Avalon.warning(f"code: {res_dict['status']} info: {res_dict['info']}")
                 if retry_n == 2:
                     PushPlus.send(self.push_token, "签到异常-电子设计竞赛网",
                                   f"返回信息:\n\n code: {res_dict['status']}\n\ninfo: {res_dict['info']}", "markdown")
                     break
                 else:
                     retry_n += 1
+                    time.sleep(3)
                     continue
         Avalon.info("Finished.")
 
