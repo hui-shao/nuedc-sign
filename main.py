@@ -9,6 +9,9 @@ import toml
 from utils.avalon import Avalon
 from utils.http_req import HttpReq
 from utils.pushplus_tool import PushPlus
+from utils.tgpush_tool import TgPushTool
+
+PUSH_CHANNEL = "TG"  # 可选项: "TG", "PUSHPLUS"
 
 
 class NuedcSign:
@@ -17,7 +20,10 @@ class NuedcSign:
         if not self.config:
             exit(0)
         self.user = self.config["user"]
-        self.push_token = self.config["push"]["push_token"]
+        self.push_plus_token = self.config["push_plus"]["push_plus_token"]
+        self.tg_bot_token = self.config["tg_push"]["tg_bot_token"]
+        self.tg_chat_id = self.config["tg_push"]["tg_chat_id"]
+        self.tg_push = TgPushTool(self.tg_bot_token, self.tg_chat_id)
         self.debug = self.config["common"]["debug"]
         self.r = HttpReq(self.user["cookie"])
 
@@ -30,7 +36,7 @@ class NuedcSign:
                 Avalon.debug_info(f"Current Retry N = {retry_n}")
             if retry_n >= 3:
                 Avalon.error("达到最大重试次数, 退出")
-                PushPlus.send(self.push_token, "电子设计竞赛网签到异常", "达到最大重试次数, 退出", "markdown")
+                self.uni_push("电子设计竞赛网签到异常", "达到最大重试次数, 退出")
                 break
             res = self.r.requests("get", url)
             res_dict = res.json()
@@ -38,25 +44,25 @@ class NuedcSign:
                 Avalon.debug_info(f"Response: {res_dict}")
             if res_dict["status"] == 0:
                 Avalon.info("签到成功-今天已经签到过啦")
-                PushPlus.send(self.push_token, "签到成功-电子设计竞赛网", f"已经签到过啦\n\n当前已连续签到: {res_dict['data']['sign_count']} 天",
-                              "markdown")
+                self.uni_push("签到成功-电子设计竞赛网",
+                              f"已经签到过啦\n\n当前已连续签到: {res_dict['data']['sign_count']} 天", )
                 break
             elif res_dict["status"] == 1:
                 Avalon.info("签到成功-今天首次签到")
-                PushPlus.send(self.push_token, "签到成功-电子设计竞赛网", f"今天签到成功\n\n当前已连续签到: {res_dict['data']['sign_count']} 天",
-                              "markdown")
+                self.uni_push("签到成功-电子设计竞赛网",
+                              f"今天签到成功\n\n当前已连续签到: {res_dict['data']['sign_count']} 天", )
                 break
             elif res_dict["status"] == 2:
                 Avalon.warning("签到失败 需要登陆")
-                PushPlus.send(self.push_token, "签到异常-电子设计竞赛网",
-                              f"需要登陆\n\n返回信息:\n\n code: {res_dict['status']}", "markdown")
+                self.uni_push("签到异常-电子设计竞赛网",
+                              f"需要登陆\n\n返回信息:\n\n code: {res_dict['status']}")
                 break
             else:
                 Avalon.warning("签到可能失败 未定义返回码")
                 Avalon.warning(f"code: {res_dict['status']} info: {res_dict['info']}")
                 if retry_n == 2:
-                    PushPlus.send(self.push_token, "签到异常-电子设计竞赛网",
-                                  f"返回信息:\n\n code: {res_dict['status']}\n\ninfo: {res_dict['info']}", "markdown")
+                    self.uni_push("签到异常-电子设计竞赛网",
+                                  f"返回信息:\n\n code: {res_dict['status']}\n\ninfo: {res_dict['info']}")
                     break
                 else:
                     Avalon.warning("重试中....")
@@ -64,6 +70,21 @@ class NuedcSign:
                     time.sleep(3)
                     continue
         Avalon.info("Finished.")
+
+    def uni_push(self, title: str, content: str):
+        if PUSH_CHANNEL == "TG":
+            if not self.tg_bot_token or not self.tg_chat_id:
+                Avalon.warning("TG Bot Token 或 Chat ID 未配置，跳过 TG 推送")
+                return
+            self.tg_push.send_tgmsg(f"{title}\n\n{content}")
+        elif PUSH_CHANNEL == "PUSHPLUS":
+            push_plus_token = sign.push_plus_token
+            if not push_plus_token:
+                Avalon.warning("Push Plus Token 未配置，跳过 Push Plus 推送")
+                return
+            PushPlus.send(push_plus_token, title, content)
+        else:
+            Avalon.error(f"未知的推送渠道: {PUSH_CHANNEL}, 无法推送消息")
 
     @staticmethod
     def read_config() -> MutableMapping[str, Any]:

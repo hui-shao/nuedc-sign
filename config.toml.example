@@ -4,5 +4,9 @@ debug = true
 [user]
 cookie = ""  # 电子设计竞赛网站的cookie
 
-[push]
-push_token = ""  # 用于 PushPlus 推送的 token, 不需要则留空
+[push_plus]
+push_plus_token = ""  # 用于 PushPlus 推送的 token, 不需要则留空
+
+[tg_push]  # Telegram Bot 推送配置
+tg_bot_token = "12345:AABBCCC"  # 你的 TG Bot Token
+tg_chat_id = "22336677788"    # 你的 TG Chat ID
